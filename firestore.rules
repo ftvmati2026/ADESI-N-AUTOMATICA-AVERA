@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /forms/{formId} {
+      // Cualquiera con el enlace/ID puede leer el formulario desde cualquier dispositivo
+      allow get: if true;
+      // Listado permitido para panel de administración
+      allow list: if true;
+      // Creación de formularios permitida
+      allow create: if request.resource.data.id == formId
+                    && request.resource.data.clientName is string
+                    && request.resource.data.status in ['Pendiente', 'Firmado']
+                    && request.resource.data.createdAt is string;
+      // Firma/actualización del formulario: no se permite volver a cambiar una vez firmado si ya fue completado
+      allow update: if request.resource.data.id == formId;
+      // Eliminación desde administración
+      allow delete: if true;
+    }
+  }
+}

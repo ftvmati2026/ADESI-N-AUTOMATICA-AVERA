@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { AdhesionForm, FormValidationErrors } from '../types';
+import { updateRemoteForm } from '../lib/formsService';
 import { AveraLogo } from './AveraLogo';
 import { SignaturePad } from './SignaturePad';
 import { DeveloperFooter } from './DeveloperFooter';
@@ -225,24 +226,40 @@ export const ClientForm: React.FC<ClientFormProps> = ({
         clarification: clarification.trim(),
       };
 
-      // Send to server
-      const res = await fetch(`/api/forms/${form.id}/sign`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      // Persistir inmediatamente en Firestore en la nube
+      const signUpdates: Partial<AdhesionForm> = {
+        ...payload,
+        status: 'Firmado',
+        signedAt: new Date().toISOString(),
+      };
 
-      let updated: AdhesionForm;
-      if (res.ok) {
-        const data = await res.json();
-        updated = data.form;
-      } else {
-        updated = {
-          ...form,
-          ...payload,
-          status: 'Firmado',
-          signedAt: new Date().toISOString(),
-        };
+      try {
+        await updateRemoteForm(form.id, signUpdates);
+      } catch (firestoreErr) {
+        console.warn('Error saving sign to Firestore directly:', firestoreErr);
+      }
+
+      // Send to server (opcional para mantener sincronizado backend local)
+      let updated: AdhesionForm = {
+        ...form,
+        ...signUpdates,
+      } as AdhesionForm;
+
+      try {
+        const res = await fetch(`/api/forms/${form.id}/sign`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.form) {
+            updated = data.form;
+          }
+        }
+      } catch {
+        // En caso de que el backend Express no esté alcanzable (ej. despliegue estático Netlify)
       }
 
       setSubmittedForm(updated);

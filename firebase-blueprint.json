@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "AdhesionForm": {
+      "title": "AdhesionForm",
+      "description": "Formulario de adhesión a débito automático de Avera Medicina Privada",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Identificador único público del formulario" },
+        "clientName": { "type": "string", "description": "Nombre y apellido del cliente" },
+        "status": { "type": "string", "enum": ["Pendiente", "Firmado"], "description": "Estado del formulario" },
+        "createdAt": { "type": "string", "description": "Fecha y hora de creación ISO" },
+        "signedAt": { "type": "string", "description": "Fecha y hora en que se firmó el formulario" },
+        "dni": { "type": "string", "description": "Número de DNI del cliente (máximo 8 dígitos)" },
+        "cardType": { "type": "string", "description": "Tipo de tarjeta de crédito" },
+        "cardNumber": { "type": "string", "description": "Número de tarjeta ingresado" },
+        "cardExpiry": { "type": "string", "description": "Vencimiento de la tarjeta MM/AA" },
+        "bank": { "type": "string", "description": "Entidad bancaria emisora" },
+        "acceptedTerms": { "type": "boolean", "description": "Aceptación de términos y condiciones" },
+        "signatureDataUrl": { "type": "string", "description": "Firma digitalizada en formato DataURL" },
+        "clarification": { "type": "string", "description": "Aclaración de firma del cliente" }
+      },
+      "required": ["id", "clientName", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/forms/{formId}": {
+      "schema": { "$ref": "#/entities/AdhesionForm" },
+      "description": "Formularios de adhesión accesibles desde cualquier dispositivo mediante ID única"
+    }
+  }
+}

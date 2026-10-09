@@ -107,20 +107,27 @@ app.get('/api/forms/:id', (req, res) => {
 });
 
 app.post('/api/forms', (req, res) => {
-  const { clientName, dni } = req.body;
+  const { clientName, dni, id, status, createdAt } = req.body;
   if (!clientName || !clientName.trim()) {
     return res.status(400).json({ success: false, message: 'El nombre y apellido es obligatorio' });
   }
 
+  const uniqueId = id || ('avera-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36));
   const newForm: AdhesionForm = {
-    id: 'avera-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36),
+    id: uniqueId,
     clientName: clientName.trim().toUpperCase(),
     dni: dni ? String(dni).replace(/\D/g, '').slice(0, 8) : undefined,
-    status: 'Pendiente',
-    createdAt: new Date().toISOString(),
+    status: status || 'Pendiente',
+    createdAt: createdAt || new Date().toISOString(),
   };
 
-  forms.unshift(newForm);
+  // Evitar duplicados si ya vino con ID
+  const existingIdx = forms.findIndex(f => f.id === uniqueId);
+  if (existingIdx !== -1) {
+    forms[existingIdx] = { ...forms[existingIdx], ...newForm };
+  } else {
+    forms.unshift(newForm);
+  }
   saveData();
   res.status(201).json({ success: true, form: newForm });
 });
