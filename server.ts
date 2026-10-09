@@ -32,34 +32,6 @@ export interface AdhesionForm {
   clarification?: string;
 }
 
-// Initial seed matching the user's screenshot
-const initialSeed: AdhesionForm[] = [
-  {
-    id: 'f-1',
-    clientName: 'RODA MONTAÑA MARIA ALEJANDRA',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // Today
-  },
-  {
-    id: 'f-2',
-    clientName: 'FERNANDEZ JULIO JAVIER',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(), // Today
-  },
-  {
-    id: 'f-3',
-    clientName: 'VEGA ERNESTO DAMIAN (2)',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString(), // Yesterday (1 day ago)
-  },
-  {
-    id: 'f-4',
-    clientName: 'PELLIZA MAXIMILIANO JOSE RAMON',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 50 * 3600 * 1000).toISOString(), // 2 days ago
-  },
-];
-
 let forms: AdhesionForm[] = [];
 
 function loadData() {
@@ -71,12 +43,12 @@ function loadData() {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
       forms = JSON.parse(content);
     } else {
-      forms = [...initialSeed];
+      forms = [];
       saveData();
     }
   } catch (err) {
-    console.warn('Error reading data file, using seed:', err);
-    forms = [...initialSeed];
+    console.warn('Error reading data file:', err);
+    forms = [];
   }
 }
 
@@ -186,9 +158,9 @@ app.delete('/api/forms/:id', (req, res) => {
 });
 
 app.post('/api/forms/reset-seed', (req, res) => {
-  forms = [...initialSeed];
+  forms = [];
   saveData();
-  res.json({ success: true, forms });
+  res.json({ success: true, forms: [] });
 });
 
 // Vite Middleware integration

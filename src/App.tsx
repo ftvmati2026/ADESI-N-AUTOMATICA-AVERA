@@ -10,38 +10,6 @@ import {
   deleteRemoteForm
 } from './lib/formsService';
 
-// Fallback seed inicial si la base de datos está completamente vacía
-const defaultInitialSeed: AdhesionForm[] = [
-  {
-    id: 'f-1',
-    clientName: 'RODA MONTAÑA MARIA ALEJANDRA',
-    dni: '28491823',
-    status: 'Pendiente',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'f-2',
-    clientName: 'FERNANDEZ JULIO JAVIER',
-    dni: '31252352',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-  },
-  {
-    id: 'f-3',
-    clientName: 'VEGA ERNESTO DAMIAN (2)',
-    dni: '33491024',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString(),
-  },
-  {
-    id: 'f-4',
-    clientName: 'PELLIZA MAXIMILIANO JOSE RAMON',
-    dni: '35129048',
-    status: 'Pendiente',
-    createdAt: new Date(Date.now() - 50 * 3600 * 1000).toISOString(),
-  },
-];
-
 // Función para extraer el ID de la URL ya sea por path (/formulario/:id o /form/:id) o query (?formId=XYZ o ?id=XYZ)
 function extractFormIdFromLocation(): string | null {
   const pathname = window.location.pathname;
@@ -100,27 +68,26 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleUrlChange);
   }, []);
 
-  // Cargar lista completa de formularios desde Firestore (para el Admin Dashboard)
+  // Cargar lista de formularios desde la base de datos remota Firestore
+  // Si la base de datos está vacía, la lista PERMANECE EN CERO de forma indefinida
+  // NUNCA se auto-cargan formularios de prueba o demo
   const fetchForms = useCallback(async () => {
     try {
-      // 1. Prioridad: Consulta remota a Firestore
+      // 1. Consulta remota prioritaria a Firestore
       const remote = await getRemoteForms();
-      if (remote && remote.length > 0) {
+      if (Array.isArray(remote)) {
+        // Asignar el resultado exacto de la base de datos (incluso si está vacío [])
         setForms(remote);
         setLoading(false);
         return;
       }
 
-      // Si Firestore aún no tiene formularios, intentar leer del servidor local o sembrar
+      // 2. Fallback de contingencia sólo si Firestore no pudo responder
       try {
         const res = await fetch('/api/forms');
         if (res.ok) {
           const data = await res.json();
-          if (data.forms && Array.isArray(data.forms) && data.forms.length > 0) {
-            // Guardar sembrado en Firestore para persistencia global
-            for (const item of data.forms) {
-              await saveRemoteForm(item).catch(() => {});
-            }
+          if (Array.isArray(data.forms)) {
             setForms(data.forms);
             setLoading(false);
             return;
@@ -130,13 +97,10 @@ export default function App() {
         // Fallback
       }
 
-      // Sembrar datos iniciales en Firestore si la base de datos está totalmente vacía
-      for (const item of defaultInitialSeed) {
-        await saveRemoteForm(item).catch(() => {});
-      }
-      setForms(defaultInitialSeed);
+      setForms([]);
     } catch (err) {
       console.error('Error fetching forms from remote database:', err);
+      setForms([]);
     } finally {
       setLoading(false);
     }
