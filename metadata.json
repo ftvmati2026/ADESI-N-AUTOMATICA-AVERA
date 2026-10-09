@@ -1,0 +1,6 @@
+{
+  "name": "Avera Medicina Privada - Adhesión a Débito",
+  "description": "Sistema de gestión de solicitudes de adhesión a débito automático, envío por WhatsApp, firma digital y generación de PDF para Avera Medicina Privada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
